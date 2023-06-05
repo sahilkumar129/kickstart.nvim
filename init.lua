@@ -261,7 +261,7 @@ vim.o.mouse = 'a'
 -- Sync clipboard between OS and Neovim.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
-vim.o.clipboard = 'unnamedplus'
+-- vim.o.clipboard = 'unnamedplus'
 
 -- Enable break indent
 vim.o.breakindent = true
@@ -317,8 +317,8 @@ vim.keymap.set('n', '<leader>bq', '<cmd>bdelete<cr>')
 vim.keymap.set('n', '<leader>bl', '<cmd>buffer #<cr>')
 
 -- Navigate between buffers
-vim.keymap.set('n', '[b', '<cmd>bprevious<cr>')
-vim.keymap.set('n', ']b', '<cmd>bnext<cr>')
+vim.keymap.set('n', '<leader>pb', '<cmd>bprevious<cr>')
+vim.keymap.set('n', '<leader>nb', '<cmd>bnext<cr>')
 
 -- Open new tabpage
 vim.keymap.set('n', '<leader>tn', '<cmd>tabnew<cr>')
