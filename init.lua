@@ -243,9 +243,6 @@ vim.o.signcolumn = "yes"
 -- set width of gutter
 vim.o.numberwidth = 6
 
--- backup file
-vim.o.backup = true
-
 -- open verticaly splits on right
 vim.o.splitright = true
 
