@@ -38,8 +38,14 @@ P.S. You can delete this when you're done too. It's your config now :)
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
+
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
+-- set termguicolors to enable highlight groups
+vim.opt.termguicolors = true
 
 -- Install package manager
 --    https://github.com/folke/lazy.nvim
@@ -89,6 +95,14 @@ require('lazy').setup({
                         -- Additional lua configuration, makes nvim stuff amazing!
                         'folke/neodev.nvim',
                 },
+        },
+
+        {
+                -- File Trees
+                'nvim-tree/nvim-tree.lua',
+                dependencies = {
+                        'nvim-tree/nvim-web-devicons'
+                }
         },
 
         {
@@ -184,7 +198,6 @@ require('lazy').setup({
                         return vim.fn.executable 'make' == 3
                 end,
         },
-
         {
                 -- Highlight, edit, and navigate code
                 'nvim-treesitter/nvim-treesitter',
@@ -193,7 +206,6 @@ require('lazy').setup({
                 },
                 build = ':TSUpdate',
         },
-
         -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
         --       These are some example plugins that I've included in the kickstart repository.
         --       Uncomment any of the lines below to enable them.
@@ -385,6 +397,11 @@ vim.keymap.set('n', '<leader>sh', require('telescope.builtin').help_tags, { desc
 vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { desc = '[S]earch current [W]ord' })
 vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
 vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostics' })
+
+-- [[ Configure Nvim Tree]]
+-- See :help nvim-tree
+require('nvim-tree').setup {}
+vim.keymap.set('n', '<leader>nt', '<cmd>NvimTreeToggle<cr>');
 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
@@ -595,4 +612,3 @@ cmp.setup {
                 { name = 'luasnip' },
         },
 }
-
