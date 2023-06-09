@@ -128,21 +128,90 @@ require('lazy').setup({
                 'lewis6991/gitsigns.nvim',
                 opts = {
                         -- See `:help gitsigns.txt`
-                        signs = {
-                                add = { text = '+' },
-                                change = { text = '~' },
-                                delete = { text = '_' },
-                                topdelete = { text = '‾' },
+                        signs                        = {
+                                add          = { text = '│' },
+                                change       = { text = '│' },
+                                delete       = { text = '_' },
+                                topdelete    = { text = '‾' },
                                 changedelete = { text = '~' },
+                                untracked    = { text = '┆' },
                         },
-                        on_attach = function(bufnr)
-                                vim.keymap.set('n', '[c', require('gitsigns').prev_hunk,
-                                        { buffer = bufnr, desc = 'Go to Previous Hunk' })
-                                vim.keymap.set('n', ']c', require('gitsigns').next_hunk,
-                                        { buffer = bufnr, desc = 'Go to Next Hunk' })
-                                vim.keymap.set('n', '<leader>ph', require('gitsigns').preview_hunk,
-                                        { buffer = bufnr, desc = '[P]review [H]unk' })
-                        end,
+                        signcolumn                   = true,  -- Toggle with `:Gitsigns toggle_signs`
+                        numhl                        = false, -- Toggle with `:Gitsigns toggle_numhl`
+                        linehl                       = false, -- Toggle with `:Gitsigns toggle_linehl`
+                        word_diff                    = false, -- Toggle with `:Gitsigns toggle_word_diff`
+                        watch_gitdir                 = {
+                                interval = 1000,
+                                follow_files = true
+                        },
+                        attach_to_untracked          = true,
+                        current_line_blame           = false, -- Toggle with `:Gitsigns toggle_current_line_blame`
+                        current_line_blame_opts      = {
+                                virt_text = true,
+                                virt_text_pos = 'eol', -- 'eol' | 'overlay' | 'right_align'
+                                delay = 1000,
+                                ignore_whitespace = false,
+                        },
+                        current_line_blame_formatter = '<author>, <author_time:%Y-%m-%d> - <summary>',
+                        sign_priority                = 6,
+                        update_debounce              = 100,
+                        status_formatter             = nil,   -- Use default
+                        max_file_length              = 40000, -- Disable if file is longer than this (in lines)
+                        preview_config               = {
+                                -- Options passed to nvim_open_win
+                                border = 'single',
+                                style = 'minimal',
+                                relative = 'cursor',
+                                row = 0,
+                                col = 1
+                        },
+                        yadm                         = {
+                                enable = false
+                        },
+                        on_attach                    = function(bufnr)
+                                local gs = package.loaded.gitsigns
+
+                                local function map(mode, l, r, opts)
+                                        opts = opts or {}
+                                        opts.buffer = bufnr
+                                        vim.keymap.set(mode, l, r, opts)
+                                end
+
+                                -- Navigation
+                                map('n', ']c', function()
+                                        if vim.wo.diff then return ']c' end
+                                        vim.schedule(function() gs.next_hunk() end)
+                                        return '<Ignore>'
+                                end, { expr = true })
+
+                                map('n', '[c', function()
+                                        if vim.wo.diff then return '[c' end
+                                        vim.schedule(function() gs.prev_hunk() end)
+                                        return '<Ignore>'
+                                end, { expr = true })
+
+                                -- Actions
+                                map('n', '<leader>hs', gs.stage_hunk, { desc = '[H]unk [S]tage' })
+                                map('n', '<leader>hr', gs.reset_hunk, { desc = '[H]unk [R]eset' })
+                                map('v', '<leader>hs',
+                                        function() gs.stage_hunk { vim.fn.line("."), vim.fn.line("v") } end,
+                                        { desc = '[H]unk [S]tage' })
+                                map('v', '<leader>hr',
+                                        function() gs.reset_hunk { vim.fn.line("."), vim.fn.line("v") } end,
+                                        { desc = '[H]unk [R]eset' })
+                                map('n', '<leader>hS', gs.stage_buffer, { desc = 'Stage Buffer' })
+                                map('n', '<leader>hu', gs.undo_stage_hunk, { desc = '[H]unk [U]ndo Stage' })
+                                map('n', '<leader>hR', gs.reset_buffer, { desc = '[H]unk [R]eset Buffer' })
+                                map('n', '<leader>hp', gs.preview_hunk, { desc = '[H]unk [P]review' })
+                                map('n', '<leader>hb', function() gs.blame_line { full = true } end,
+                                        { desc = '[H]unk [B]lame Line' })
+                                map('n', '<leader>tb', gs.toggle_current_line_blame,
+                                        { desc = '[T]oggle [B]lame for current line' })
+                                map('n', '<leader>hd', gs.diffthis, { desc = '[H]unk [D]iff' })
+                                map('n', '<leader>hD', function() gs.diffthis('~') end, { desc = '[H]unk [D]iff' })
+                                map('n', '<leader>td', gs.toggle_deleted,
+                                        { desc = '[T]oggle [D]etected. Show changes in same buffer' })
+                        end
                 },
         },
 
@@ -206,6 +275,15 @@ require('lazy').setup({
                 },
                 build = ':TSUpdate',
         },
+        {
+                -- Highlight, edit, and navigate code
+                'savq/paq-nvim',
+                dependencies = {
+                        "prettier/vim-prettier",
+                        "dense-analysis/ale",
+                },
+        },
+
         -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
         --       These are some example plugins that I've included in the kickstart repository.
         --       Uncomment any of the lines below to enable them.
@@ -296,59 +374,6 @@ vim.keymap.set('n', '<leader>w', '<cmd>write<cr>')
 vim.keymap.set('n', '<leader>bq', '<cmd>bdelete<cr>')
 vim.keymap.set({ 'n', 'x', 'o' }, '<leader>h', '^')
 vim.keymap.set({ 'n', 'x', 'o' }, '<leader>l', 'g_')
--- Move around windows
-vim.keymap.set('n', '<C-j>', '<C-w>j')
-vim.keymap.set('n', '<C-k>', '<C-w>k')
-vim.keymap.set('n', '<C-h>', '<C-w>h')
-vim.keymap.set('n', '<C-l>', '<C-w>l')
--- Write file
-vim.keymap.set('n', '<leader>w', '<cmd>write<cr>')
-
--- Safe quit
-vim.keymap.set('n', '<leader>qq', '<cmd>quitall<cr>')
-
--- Force quit
-vim.keymap.set('n', '<leader>Q', '<cmd>quitall!<cr>')
-
--- Close buffer
-vim.keymap.set('n', '<leader>bq', '<cmd>bdelete<cr>')
-
--- Move to last active buffer
-vim.keymap.set('n', '<leader>bl', '<cmd>buffer #<cr>')
-
--- Navigate between buffers
-vim.keymap.set('n', '<leader>pb', '<cmd>bprevious<cr>')
-vim.keymap.set('n', '<leader>nb', '<cmd>bnext<cr>')
-
--- Open new tabpage
-vim.keymap.set('n', '<leader>tn', '<cmd>tabnew<cr>')
-
--- Search result highlight
-vim.keymap.set('n', '<leader>uh', '<cmd>set invhlsearch<cr>')
-
--- Cursorline highlight
-vim.keymap.set('n', '<leader>uc', '<cmd>set invcursorline<cr>')
-
--- Line numbers
-vim.keymap.set('n', '<leader>un', '<cmd>set invnumber<cr>')
-
--- Relative line numbers
-vim.keymap.set('n', '<leader>ur', '<cmd>set invrelativenumber<cr>')
-
--- Add word to search then replace
--- vim.keymap.set('n', '<leader>j', [[<cmd>let @/='\<'.expand('<cword>').'\>'<cr>"_ciw]])
-
--- Add selection to search then replace
--- vim.keymap.set('x', '<leader>j', [[y<cmd>let @/=substitute(escape(@", '/'), '\n', '\\n', 'g')<cr>"_cgn]])
-
--- Undo break points
-local break_points = { '<Space>', '-', '_', ':', '.', '/' }
-for _, char in ipairs(break_points) do
-        vim.keymap.set('i', char, char .. '<C-g>u')
-end
--- Remap for dealing with word wrap
-vim.keymap.set('n', 'k', "v:count == 2 ? 'gk' : 'k'", { expr = true, silent = true })
-vim.keymap.set('n', 'j', "v:count == 2 ? 'gj' : 'j'", { expr = true, silent = true })
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
@@ -609,3 +634,65 @@ cmp.setup {
                 { name = 'luasnip' },
         },
 }
+
+-- Use Prettier as the default formatter for supported file types
+vim.cmd([[
+  augroup AutoFormat
+    autocmd!
+    autocmd BufWritePre *.js,*.jsx,*.ts,*.tsx,*.json,*.html,*.css,*.scss,*.md :silent! FormatWrite
+  augroup END
+]])
+
+-- Disable auto-formatting on specific file types (e.g., markdown)
+vim.g.FormatDisable = { 'markdown' }
+
+-- Add Prettier as a fixer for specific file types in ALE
+vim.g.ale_fixers = {
+        ["javascript"] = { "prettier" },
+        ["typescript"] = { "prettier" },
+        ["markdown"] = { "prettier" },
+        -- Add more languages and their respective fixers here
+}
+
+-- Customize Prettier options
+vim.g["prettier#autoformat_config_present"] = 0                           -- Disable searching for config files
+vim.g["prettier#autoformat_config_file"] = vim.fn.expand("~/.prettierrc") -- Specify the path to your Prettier config file
+
+-- Enable Prettier format markers (e.g., eslint-disable-next-line prettier/prettier)
+vim.g["prettier#quickfix_enabled"] = 1
+
+-- Set up keybindings for toggling Prettier auto-format on save
+vim.api.nvim_command([[
+  autocmd FileType javascript,typescript,html,css nnoremap <buffer> <Leader>fp :PrettierToggle<CR>
+]])
+
+-- [[ Basic Keymaps ]] --
+-- Move around windows
+vim.keymap.set('n', '<C-j>', '<C-w>j')
+vim.keymap.set('n', '<C-k>', '<C-w>k')
+vim.keymap.set('n', '<C-h>', '<C-w>h')
+vim.keymap.set('n', '<C-l>', '<C-w>l')
+-- Write file
+vim.keymap.set('n', '<leader>ww', '<cmd>Prettier<cr><cmd>write<cr>')
+vim.keymap.set('n', '<leader>wf', '<cmd>Format<cr><cmd>write<cr>')
+-- Safe quit
+vim.keymap.set('n', '<leader>qq', '<cmd>quitall<cr>')
+-- Force quit
+vim.keymap.set('n', '<leader>Q', '<cmd>quitall!<cr>')
+-- Close buffer
+vim.keymap.set('n', '<leader>bq', '<cmd>bdelete<cr>')
+-- Move to last active buffer
+vim.keymap.set('n', '<leader>bl', '<cmd>buffer #<cr>')
+-- Navigate between buffers
+vim.keymap.set('n', '<leader>pb', '<cmd>bprevious<cr>')
+vim.keymap.set('n', '<leader>nb', '<cmd>bnext<cr>')
+-- Open new tabpage
+vim.keymap.set('n', '<leader>tn', '<cmd>tabnew<cr>')
+-- Search result highlight
+vim.keymap.set('n', '<leader>uh', '<cmd>set invhlsearch<cr>')
+-- Cursorline highlight
+vim.keymap.set('n', '<leader>uc', '<cmd>set invcursorline<cr>')
+-- Line numbers
+vim.keymap.set('n', '<leader>un', '<cmd>set invnumber<cr>')
+-- Relative line numbers
+vim.keymap.set('n', '<leader>ur', '<cmd>set invrelativenumber<cr>')
