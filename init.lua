@@ -295,7 +295,7 @@ require('lazy').setup({
         --    up-to-date with whatever is in the kickstart repo.
         --
         --    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
-        { import = 'kickstart.plugins' },
+        -- { import = 'kickstart.plugins' },
         { import = 'custom.plugins' },
 }, {})
 
@@ -644,7 +644,7 @@ vim.cmd([[
 ]])
 
 -- Disable auto-formatting on specific file types (e.g., markdown)
-vim.g.FormatDisable = { 'markdown' }
+vim.g.FormatDisable = {}
 
 -- Add Prettier as a fixer for specific file types in ALE
 vim.g.ale_fixers = {
